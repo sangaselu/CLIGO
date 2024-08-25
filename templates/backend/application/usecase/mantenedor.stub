@@ -1,0 +1,147 @@
+package usecase
+
+import (
+	"errors"
+	log "github.com/sirupsen/logrus"
+	"gitlab.com/ns-desarrollo-web/erp/ns-core-service"
+	"%RUTAMANTENEDOR%/application/service"
+	"%RUTAMANTENEDOR%/domain/dto"
+	"%RUTAMANTENEDOR%/domain/mapping"
+	"%RUTAMANTENEDOR%/domain/repository"
+	"%RUTAMANTENEDOR%/domain/usecase"
+	"%RUTAMANTENEDOR%/domain/valueobject"
+)
+
+type %NOMBREMANTENEDOR%UseCase struct {
+	repo repository.%NOMBREMANTENEDOR%Repository
+	serv *service.%NOMBREMANTENEDOR%Service
+}
+
+func (p %NOMBREMANTENEDOR%UseCase) Listar(ctx *ns.Context, start int, length int, search string, order string) (res *valueobject.%NOMBREMANTENEDOR%Paginacion, err error) {
+	res, err = p.serv.%NOMBREMANTENEDOR%Paginacion(ctx, start, length, search, order)
+	if err != nil {
+		log.Error("Error al Listar [%NOMBREMANTENEDOR%]: ", err)
+		return
+	}
+
+	return
+}
+
+func (p %NOMBREMANTENEDOR%UseCase) Buscar(ctx *ns.Context, search, advancedSearch string, columns bool) (res []*valueobject.%NOMBREMANTENEDOR%Suggest, err error) {
+	res, err = p.serv.%NOMBREMANTENEDOR%Suggest(ctx, search, advancedSearch, columns)
+	if err != nil {
+		log.Error("Error al Buscar [%NOMBREMANTENEDOR%]: ", err)
+		return
+	}
+
+	return
+}
+
+func (p %NOMBREMANTENEDOR%UseCase) BuscarPorId(ctx *ns.Context, id int64) (res *valueobject.%NOMBREMANTENEDOR%Response, err error) {
+	rs, err := p.repo.BuscarPorId(ctx, id)
+	if err != nil {
+		log.Error("Error al Buscar Por Id [%NOMBREMANTENEDOR%]: ", err)
+		return
+	}
+
+	res = mapping.Map%NOMBREMANTENEDOR%ModelToVO(rs)
+
+	return
+}
+
+func (p %NOMBREMANTENEDOR%UseCase) Crear(ctx *ns.Context, request *dto.%NOMBREMANTENEDOR%Request) (res *valueobject.%NOMBREMANTENEDOR%Response, err error) {
+	mod := mapping.Map%NOMBREMANTENEDOR%DTOTOModel(request)
+	id, err := p.repo.Crear(ctx, mod)
+	if err != nil {
+		log.Error("Error al Crear [%NOMBREMANTENEDOR%]: ", err)
+		return
+	}
+
+	rs, err := p.repo.BuscarPorId(ctx, id)
+	if err != nil {
+		log.Error("Error al Crear Buscar Por Id [%NOMBREMANTENEDOR%]: ", err)
+		return
+	}
+
+	res = mapping.Map%NOMBREMANTENEDOR%ModelToVO(rs)
+
+	return
+}
+
+func (p %NOMBREMANTENEDOR%UseCase) Actualizar(ctx *ns.Context, id int64, request *dto.%NOMBREMANTENEDOR%Request) (res *valueobject.%NOMBREMANTENEDOR%Response, err error) {
+	mod := mapping.Map%NOMBREMANTENEDOR%DTOTOModel(request)
+	err = p.repo.Actualizar(ctx, id, mod)
+	if err != nil {
+		log.Error("Error al Actualizar [%NOMBREMANTENEDOR%]: ", err)
+		return
+	}
+
+	rs, err := p.repo.BuscarPorId(ctx, id)
+	if err != nil {
+		log.Error("Error al Actualizar Buscar Por Id [%NOMBREMANTENEDOR%]: ", err)
+		return
+	}
+
+	res = mapping.Map%NOMBREMANTENEDOR%ModelToVO(rs)
+
+	return
+}
+
+func (p %NOMBREMANTENEDOR%UseCase) Eliminar(ctx *ns.Context, id int64) (err error) {
+	err = p.repo.Eliminar(ctx, id)
+	if err != nil {
+		log.Error("Error al Eliminar [%NOMBREMANTENEDOR%]: ", err)
+		return
+	}
+
+	return
+}
+
+func (p %NOMBREMANTENEDOR%UseCase) Habilitar(ctx *ns.Context, id int64) (err error) {
+	rs, err := p.repo.BuscarPorId(ctx, id)
+	if err != nil {
+		log.Error("Error al Habilitar Buscar Por Id [%NOMBREMANTENEDOR%]: ", err)
+		return
+	}
+
+	if rs.Habilitado{
+		err = errors.New("El registro ya se encuentra habilitado")
+		return
+	}
+
+	err = p.repo.HabilitarDeshabilitar(ctx, id, true)
+	if err != nil {
+		log.Error("Error al Habilitar [%NOMBREMANTENEDOR%]: ", err)
+		return
+	}
+
+	return
+}
+
+func (p %NOMBREMANTENEDOR%UseCase) Deshabilitar(ctx *ns.Context, id int64) (err error) {
+	rs, err := p.repo.BuscarPorId(ctx, id)
+	if err != nil {
+		log.Error("Error al Deshabilitar Buscar Por Id [%NOMBREMANTENEDOR%]: ", err)
+		return
+	}
+
+	if !rs.Habilitado{
+		err = errors.New("El registro ya se encuentra deshabilitado")
+		return
+	}
+
+	err = p.repo.HabilitarDeshabilitar(ctx, id, false)
+	if err != nil {
+		log.Error("Error al Deshabilitar [%NOMBREMANTENEDOR%]: ", err)
+		return
+	}
+
+	return
+}
+
+func New%NOMBREMANTENEDOR%UseCase(%NOMBREMANTENEDOR%Repository repository.%NOMBREMANTENEDOR%Repository, %NOMBREMANTENEDOR%Service *service.%NOMBREMANTENEDOR%Service) usecase.%NOMBREMANTENEDOR%UseCase {
+	return %NOMBREMANTENEDOR%UseCase{
+		repo: %NOMBREMANTENEDOR%Repository,
+		serv: %NOMBREMANTENEDOR%Service,
+	}
+}

@@ -1,0 +1,66 @@
+package mapping
+
+import (
+	"%RUTAMANTENEDOR%/domain/dto"
+	"%RUTAMANTENEDOR%/domain/entity"
+	"%RUTAMANTENEDOR%/domain/model"
+	"%RUTAMANTENEDOR%/domain/valueobject"
+)
+
+func Map%NOMBREMANTENEDOR%Paginación(Modelo []model.%NOMBREMANTENEDOR%Model, total int64, filtered int64) *valueobject.%NOMBREMANTENEDOR%Paginacion {
+	var res []valueobject.%NOMBREMANTENEDOR%Response
+
+	for i := range Modelo {
+		res = append(res, valueobject.%NOMBREMANTENEDOR%Response{
+			%VARIABLESPAGINACION%
+		})
+	}
+
+	return &valueobject.%NOMBREMANTENEDOR%Paginacion{
+		Data: res,
+		Meta: valueobject.MetaPaginacion{
+			RecordsFiltered: filtered,
+			RecordsTotal:    total,
+		},
+	}
+}
+
+func Map%NOMBREMANTENEDOR%Suggest(mod []model.%NOMBREMANTENEDOR%Model) (res []*valueobject.%NOMBREMANTENEDOR%Suggest) {
+	for i := range mod {
+
+		var allData interface{}
+
+		allData = mod
+
+		if mod[i].Cols != nil {
+			allData = mod[i].Cols
+		}
+
+		res = append(res, &valueobject.%NOMBREMANTENEDOR%Suggest{
+			Id:          mod[i].Id,
+			Code:        &mod[i].Codigo,
+			Label:       &mod[i].Nombre,
+			Description: &mod[i].Codigo,
+			Badge:       &mod[i].Codigo,
+			Data:        allData,
+		})
+	}
+
+	return
+}
+
+func Map%NOMBREMANTENEDOR%ModelToVO(Modelo *model.%NOMBREMANTENEDOR%Model) *valueobject.%NOMBREMANTENEDOR%Response {
+
+
+	return &valueobject.%NOMBREMANTENEDOR%Response{
+		%VARIABLESVO%
+	}
+}
+
+func Map%NOMBREMANTENEDOR%DTOTOModel(Request *dto.%NOMBREMANTENEDOR%Request) *model.%NOMBREMANTENEDOR%Model {
+	return &model.%NOMBREMANTENEDOR%Model{
+		%NOMBREMANTENEDOR%Entity: entity.%NOMBREMANTENEDOR%Entity{
+			%VARIABLESMODELO%
+		},
+	}
+}

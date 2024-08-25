@@ -1,0 +1,112 @@
+package mssql_repository
+
+import (
+	"gitlab.com/ns-desarrollo-web/erp/ns-core-service"
+	db "gitlab.com/ns-desarrollo-web/erp/ns-core-service/services/databases"
+	"%RUTAMANTENEDOR%/domain/model"
+	"%RUTAMANTENEDOR%/domain/repository"
+	"%NOMBRERUTASERVICIO%/api/utils"
+)
+
+type %NOMBREMANTENEDOR%MssqlRepository struct {
+	db db.Sql
+}
+
+func (p *%NOMBREMANTENEDOR%MssqlRepository) Listar(client *ns.Context, start int, length int, search string, order string) (entidad []model.%NOMBREMANTENEDOR%Model, total int64, filtered int64, err error) {
+	rs, err := p.db.Run(client, `
+		EXEC [NS_MAINTAINER_LIST]
+				@idempresa = '',
+				@columns = '%VARIABLESCOLUMNAS%',
+				@table = '%NOMBRETABLA%',
+				@start = $1,
+				@length = $2,
+				@search = $3,
+				@order = '',
+				@advanced_filter = '',
+				@default_filter = '%FILTROAVANZADO%'
+	`, start, length, search)
+	if err != nil {
+		return
+	}
+
+	err = rs.Unmarshal(&entidad)
+	if err != nil {
+		return
+	}
+
+	total, filtered = rs.Total, rs.Filtered
+
+	return
+}
+
+func (p *%NOMBREMANTENEDOR%MssqlRepository) Crear(ctx *ns.Context, modelo *model.%NOMBREMANTENEDOR%Model) (id int64, err error) {
+	json, err := db.Marshal(modelo)
+
+	id, err = p.db.QueryWithLastID(ctx, "EXEC NS_%NOMBRETABLA%_I  @JSON = $1;", string(json))
+
+	return
+}
+
+func (p *%NOMBREMANTENEDOR%MssqlRepository) Actualizar(ctx *ns.Context, id int64, modelo *model.%NOMBREMANTENEDOR%Model) (err error) {
+	json, err := db.Marshal(modelo)
+
+	_, err = p.db.Query(ctx, "EXEC NS_%NOMBRETABLA%_U @ID = $1, @JSON = $2;", id, string(json))
+
+	return
+}
+
+func (p *%NOMBREMANTENEDOR%MssqlRepository) Eliminar(ctx *ns.Context, id int64) (err error) {
+	_, err = p.db.Exec(ctx, `EXEC NS_%NOMBRETABLA%_D @id = $1`, id)
+
+	return
+}
+
+func (p *%NOMBREMANTENEDOR%MssqlRepository) BuscarPorId(ctx *ns.Context, id int64) (modelo *model.%NOMBREMANTENEDOR%Model, err error) {
+	var m []model.%NOMBREMANTENEDOR%Model
+
+	err = p.db.RunUnmarshal(ctx, &m, `EXEC NS_%NOMBRETABLA%_F @id = $1`, id)
+	if err != nil{
+		return
+	}
+	modelo = &m[0]
+
+	return
+}
+
+func (p *%NOMBREMANTENEDOR%MssqlRepository) Buscar(ctx *ns.Context, search, advancedSearch string, isColumns bool) (modelo []model.%NOMBREMANTENEDOR%Model, err error) {
+
+	if isColumns {
+		var m model.%NOMBREMANTENEDOR%Model
+		cols := utils.ObtenerCampos(m.%NOMBREMANTENEDOR%Entity)
+		modelo = append(modelo, model.%NOMBREMANTENEDOR%Model{
+			Cols: cols,
+		})
+		return
+	}
+
+	err = p.db.Select(ctx, &modelo, `
+		EXEC NS_GETDATA_F
+			@idempresa = '',
+			@columns = '%VARIABLESCOLUMNAS%',
+			@table = '%NOMBRETABLA%',
+			@search = $1,
+			@limit = $2,
+ 			@id_filter = '',
+			@default_filter = '%FILTROAVANZADO%',
+			@advanced_filter = $3`, search, 10, advancedSearch)
+
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (p *%NOMBREMANTENEDOR%MssqlRepository) HabilitarDeshabilitar(ctx *ns.Context, id int64, status bool) (err error) {
+	_, err = p.db.Exec(ctx, `EXEC NS_%NOMBRETABLA%_ED @id = $1, @estado = $2`, id, status)
+
+	return
+}
+
+func New%NOMBREMANTENEDOR%Repository(db db.Sql) repository.%NOMBREMANTENEDOR%Repository {
+	return &%NOMBREMANTENEDOR%MssqlRepository{db: db}
+}

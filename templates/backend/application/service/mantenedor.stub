@@ -1,0 +1,38 @@
+package service
+
+import (
+	"gitlab.com/ns-desarrollo-web/erp/ns-core-service"
+	"%RUTAMANTENEDOR%/domain/mapping"
+	"%RUTAMANTENEDOR%/domain/repository"
+	"%RUTAMANTENEDOR%/domain/valueobject"
+)
+
+type %NOMBREMANTENEDOR%Service struct {
+	repo repository.%NOMBREMANTENEDOR%Repository
+}
+
+func (e *%NOMBREMANTENEDOR%Service) %NOMBREMANTENEDOR%Paginacion(ctx *ns.Context, start int, length int, search string, order string) (res *valueobject.%NOMBREMANTENEDOR%Paginacion, err error) {
+	rs, total, filtered, err := e.repo.Listar(ctx, start, length, search, order)
+	if err != nil {
+		return
+	}
+
+	res = mapping.Map%NOMBREMANTENEDOR%Paginación(rs, total, filtered)
+
+	return
+}
+
+func (e *%NOMBREMANTENEDOR%Service) %NOMBREMANTENEDOR%Suggest(ctx *ns.Context, search, advancedSearch string, columns bool) (res []*valueobject.%NOMBREMANTENEDOR%Suggest, err error) {
+	rs, err := e.repo.Buscar(ctx, search, advancedSearch, columns)
+	if err != nil {
+		return
+	}
+
+	res = mapping.Map%NOMBREMANTENEDOR%Suggest(rs)
+
+	return
+}
+
+func New%NOMBREMANTENEDOR%Service(%NOMBREMANTENEDOR%Repository repository.%NOMBREMANTENEDOR%Repository) *%NOMBREMANTENEDOR%Service{
+	return &%NOMBREMANTENEDOR%Service{repo: %NOMBREMANTENEDOR%Repository}
+}
